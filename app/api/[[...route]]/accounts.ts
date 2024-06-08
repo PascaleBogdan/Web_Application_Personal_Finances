@@ -12,53 +12,53 @@ type Transaction = {
 };
 
 const app = new Hono()
-  .get(
-    "/",
-    clerkMiddleware(),
-    async (c) => {
-      const auth = getAuth(c);
+  .use('*', clerkMiddleware())  // Apply clerk middleware to all routes
 
-      if (!auth?.userId) {
-        return c.json({ error: "Unauthorized" }, 401);
-      }
+  .get("/", async (c) => {
+    const auth = getAuth(c);
 
-      const accountData = await db
-        .select({
-          id: accounts.id,
-          name: accounts.name,
-          budget: accounts.budget,
-        })
-        .from(accounts)
-        .where(eq(accounts.userId, auth.userId));
-
-      const accountsWithRemainingBudget = await Promise.all(
-        accountData.map(async (account) => {
-          const transactionsData: Transaction[] = await db
-            .select({
-              amount: transactions.amount,
-            })
-            .from(transactions)
-            .where(eq(transactions.accountId, account.id));
-          const netTransactions = transactionsData.reduce((sum, transaction) => {
-            const amount = transaction.amount / 1000; 
-            if (isNaN(amount)) {
-              console.error(`Invalid transaction amount: ${transaction.amount}`);
-              return sum;
-            }
-            return sum + amount;  
-          }, 0);
-          const initialBudget = account.budget ?? 0;  
-          const remainingBudget = initialBudget + netTransactions;  
-          return {
-            ...account,
-            remainingBudget,
-          };
-        })
-      );
-
-      return c.json({ data: accountsWithRemainingBudget });
+    if (!auth?.userId) {
+      return c.json({ error: "Unauthorized" }, 401);
     }
-  )
+
+    const accountData = await db
+      .select({
+        id: accounts.id,
+        name: accounts.name,
+        budget: accounts.budget,
+      })
+      .from(accounts)
+      .where(eq(accounts.userId, auth.userId));
+
+    const accountsWithRemainingBudget = await Promise.all(
+      accountData.map(async (account) => {
+        const transactionsData: Transaction[] = await db
+          .select({
+            amount: transactions.amount,
+          })
+          .from(transactions)
+          .where(eq(transactions.accountId, account.id));
+        const netTransactions = transactionsData.reduce((sum, transaction) => {
+          const amount = transaction.amount / 1000; 
+          if (isNaN(amount)) {
+            console.error(`Invalid transaction amount: ${transaction.amount}`);
+            return sum;
+          }
+          return sum + amount;  
+        }, 0);
+        const initialBudget = account.budget ?? 0;  
+        let remainingBudget = initialBudget + netTransactions;
+        return {
+          ...account,
+          budget: account.budget === 0 ? null : account.budget, // Adjust budget to null if it is 0
+          remainingBudget: remainingBudget === 0 ? null : remainingBudget,  // Adjust remainingBudget to null if it is 0
+        };
+      })
+    );
+
+    return c.json({ data: accountsWithRemainingBudget });
+  })
+
   .get(
     "/:id",
     zValidator(
@@ -67,7 +67,6 @@ const app = new Hono()
         id: z.string(),
       })
     ),
-    clerkMiddleware(),
     async (c) => {
       const auth = getAuth(c);
       const { id } = c.req.valid("param");
@@ -89,12 +88,12 @@ const app = new Hono()
       if (!data) {
         return c.json({ error: "Not found" }, 404);
       }
-      return c.json({ data });
+      return c.json({ data: { ...data, budget: data.budget === 0 ? null : data.budget } });
     }
   )
+
   .post(
     "/",
-    clerkMiddleware(),
     zValidator(
       "json",
       inseartAccountSchema.pick({
@@ -116,16 +115,16 @@ const app = new Hono()
           id: createId(),
           userId: auth.userId,
           name: values.name,
-          budget: values.budget ?? 0,  // Default to 0 if budget is null
+          budget: values.budget ?? 0, // Allow budget to be 0 or null during creation
         })
         .returning();
 
-      return c.json({ data });
+      return c.json({ data: { ...data, budget: data.budget === 0 ? null : data.budget } });
     }
   )
+
   .post(
     "/bulk-delete",
-    clerkMiddleware(),
     zValidator(
       "json",
       z.object({
@@ -154,9 +153,9 @@ const app = new Hono()
       return c.json({ data });
     }
   )
+
   .patch(
     "/:id",
-    clerkMiddleware(),
     zValidator(
       "param",
       z.object({
@@ -183,7 +182,7 @@ const app = new Hono()
         .update(accounts)
         .set({
           name: values.name,
-          budget: values.budget ?? 0,  // Default to 0 if budget is null
+          budget: values.budget ?? 0, // Allow budget to be 0 or null during update
         })
         .where(
           and(eq(accounts.userId, auth.userId), eq(accounts.id, id))
@@ -194,12 +193,12 @@ const app = new Hono()
         return c.json({ error: "Not found" }, 404);
       }
 
-      return c.json({ data });
+      return c.json({ data: { ...data, budget: data.budget === 0 ? null : data.budget } });
     }
   )
+
   .delete(
     "/:id",
-    clerkMiddleware(),
     zValidator(
       "param",
       z.object({
@@ -230,9 +229,9 @@ const app = new Hono()
       return c.json({ data });
     }
   )
+
   .patch(
     "/:id/budget",
-    clerkMiddleware(),
     zValidator(
       "param",
       z.object({
@@ -256,7 +255,7 @@ const app = new Hono()
 
       const [data] = await db
         .update(accounts)
-        .set({ budget })
+        .set({ budget: budget ?? 0 }) // Allow budget to be 0 or null during update
         .where(
           and(eq(accounts.userId, auth.userId), eq(accounts.id, id))
         )
@@ -266,7 +265,7 @@ const app = new Hono()
         return c.json({ error: "Not found" }, 404);
       }
 
-      return c.json({ data });
+      return c.json({ data: { ...data, budget: data.budget === 0 ? null : data.budget } });
     }
   );
 

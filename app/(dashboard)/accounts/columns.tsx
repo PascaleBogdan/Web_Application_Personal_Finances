@@ -39,37 +39,36 @@ export const columns: ColumnDef<ResponseType>[] = [
   },
   {
     accessorKey: "name",
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Name
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      );
-    }
+    header: ({ column }) => (
+      <Button
+        variant="ghost"
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+      >
+        Name
+        <ArrowUpDown className="ml-2 h-4 w-4" />
+      </Button>
+    ),
+    cell: ({ row }) => <span>{row.original.name}</span>,
   },
   {
     accessorKey: "budget",
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Budget
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      );
-    },
+    header: ({ column }) => (
+      <Button
+        variant="ghost"
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+      >
+        Budget
+        <ArrowUpDown className="ml-2 h-4 w-4" />
+      </Button>
+    ),
     cell: ({ row }) => {
       const budget = row.original.budget;
-      return (
-        <span className={budget !== null && budget >= 0 ? "text-green-500" : "text-red-500"}>
-          ${budget !== null ? budget : "N/A"}
+      return budget !== null && budget !== 0 ? (
+        <span className={budget > 0 ? "text-green-500" : "text-red-500"}>
+          ${budget.toFixed(2)}
         </span>
+      ) : (
+        null // Return null to render an empty cell
       );
     },
     enableSorting: true,
@@ -77,23 +76,23 @@ export const columns: ColumnDef<ResponseType>[] = [
   },
   {
     accessorKey: "remainingBudget",
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Remaining Budget
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      );
-    },
+    header: ({ column }) => (
+      <Button
+        variant="ghost"
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+      >
+        Remaining Budget
+        <ArrowUpDown className="ml-2 h-4 w-4" />
+      </Button>
+    ),
     cell: ({ row }) => {
       const remainingBudget = row.original.remainingBudget;
-      return (
-        <span className={remainingBudget !== null && remainingBudget >= 0 ? "text-green-500" : "text-red-500"}>
-          ${remainingBudget !== null ? remainingBudget : "N/A"}
+      return remainingBudget !== null && remainingBudget !== 0 ? (
+        <span className={remainingBudget > 0 ? "text-green-500" : "text-red-500"}>
+          ${remainingBudget.toFixed(2)}
         </span>
+      ) : (
+        null // Return null to render an empty cell
       );
     },
     enableSorting: true,

@@ -7,7 +7,7 @@ import { useOpenAccount } from "@/features/accounts/hooks/use-open-account";
 import { useDeleteAccount } from "@/features/accounts/api/use-delete-account";
 import { useConfirm } from "@/hooks/use-confim";
 import { useState } from "react";
-import { EditAccountSheet } from "@/features/accounts/components/edit-account-sheet"; // Adjust import according to your file structure
+import { EditAccountSheet } from "@/features/accounts/components/edit-account-sheet"; 
 
 type Props = {
     id: string;

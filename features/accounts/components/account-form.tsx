@@ -9,9 +9,10 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 
 const formSchema = inseartAccountSchema.pick({
     name: true,
-    budget: true, // Add the budget field to the form schema
+    budget: true,
 }).extend({
-    budget: z.number().positive("Budget must be a positive number"), // Ensure budget is a positive number
+    name: z.string().nonempty("Name is required"), // Ensure name is required
+    budget: z.union([z.number().positive("Budget must be a positive number").nullable(), z.null()]), // Allow budget to be a positive number or null
 });
 
 type FormValues = z.input<typeof formSchema>;
@@ -33,7 +34,10 @@ export const AccountForm = ({
 }: Props) => {
     const form = useForm<FormValues>({
         resolver: zodResolver(formSchema),
-        defaultValues: defaultValues,
+        defaultValues: {
+            name: defaultValues?.name || "",
+            budget: null, // Initialize budget as null to keep the input empty
+        },
     });
 
     const handleSubmit = (values: FormValues) => {
@@ -46,46 +50,41 @@ export const AccountForm = ({
 
     return (
         <Form {...form}>
-            <form onSubmit={form.handleSubmit(handleSubmit)}
-                className="space-y-4 pt-4"
-            >
-                <FormField
+            <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4 pt-4">
+            <FormField
                     name="name"
                     control={form.control}
                     render={({ field }) => (
                         <FormItem>
-                            <FormLabel>
-                                Name
-                            </FormLabel>
+                            <FormLabel>Name</FormLabel>
                             <FormControl>
                                 <Input
                                     disabled={disabled}
                                     placeholder="e.g. Credit Card, Cash, Bank"
                                     {...field}
                                 />
-                            </FormControl>
-                            <FormMessage /> {/* Display validation messages */}
-                        </FormItem>
-                    )}
-                />
-                <FormField
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                )}
+            />
+          <FormField
                     name="budget"
                     control={form.control}
                     render={({ field }) => (
                         <FormItem>
-                            <FormLabel>
-                                Budget
-                            </FormLabel>
+                            <FormLabel>Budget</FormLabel>
                             <FormControl>
                                 <Input
                                     type="number"
                                     disabled={disabled}
                                     placeholder="Enter budget"
                                     {...field}
-                                    onChange={(e) => field.onChange(parseFloat(e.target.value))}
+                                    value={field.value === null ? '' : field.value} // Ensure the input is empty if value is null
+                                    onChange={(e) => field.onChange(e.target.value === '' ? null : parseFloat(e.target.value))}
                                 />
                             </FormControl>
-                            <FormMessage /> {/* Display validation messages */}
+                            <FormMessage />
                         </FormItem>
                     )}
                 />

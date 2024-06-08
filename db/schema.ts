@@ -9,14 +9,16 @@ export const accounts = pgTable("accounts", {
   plaidId: text("plaid_id"),
   name: text("name").notNull(),
   userId: text("user_id").notNull(),
-  budget: integer("budget").default(0),  // Add the budget field
+  budget: integer("budget").default(0),  // Define the budget field with a default of null
 });
 
 export const accountsRelations = relations(accounts, ({ many }) => ({
   transactions: many(transactions),
 }));
 
-export const inseartAccountSchema = createInsertSchema(accounts);
+export const inseartAccountSchema = createInsertSchema(accounts).extend({
+  budget: z.number().positive("Budget must be a positive number").nullable(),  // Ensure the schema reflects that budget can be null
+});
 
 export const categories = pgTable("categories", {
   id: text("id").primaryKey(),

@@ -68,9 +68,9 @@ export function DataTable<TData, TValue>({
     },
   });
 
-  const formatCurrency = (value: number | undefined) => {
-    if (value === undefined || isNaN(value)) {
-      return "0.00 RON"; // Fallback value
+  const formatCurrency = (value: number | null | undefined) => {
+    if (value === null || value === undefined || isNaN(value)) {
+      return ""; // Fallback value
     }
     return `${value.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, "$&,")} RON`;
   };
@@ -134,11 +134,11 @@ export function DataTable<TData, TValue>({
                   data-state={row.getIsSelected() && "selected"}
                 >
                   {row.getVisibleCells().map((cell) => {
-                    const value = cell.getValue() as number | undefined;
+                    const value = cell.getValue() as number | null | undefined;
                     const isPositive =
                       cell.column.id === "budget" ||
                       cell.column.id === "remainingBudget"
-                        ? value !== undefined && value >= 0
+                        ? value !== undefined && value !== null && value >= 0
                         : null;
                     const formattedValue =
                       cell.column.id === "budget" ||
