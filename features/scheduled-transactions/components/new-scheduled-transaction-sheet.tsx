@@ -5,25 +5,25 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import { useNewTransaction } from "../hooks/use-new-transaction";
-import { inseartTransactionSchema } from "@/db/schema";
+import { useNewScheduledTransaction } from "@/features/scheduled-transactions/hooks/use-new-scheduled-transactions";
+import { insertScheduledTransactionSchema } from "@/db/schema";
 import { z } from "zod";
-import { useCreateTransaction } from "../api/use-create-transaction";
+import { useCreateScheduledTransaction } from "../api/use-created-scheduled-transactions";
 import { useCreateCategory } from "@/features/categories/api/use-create-category";
 import { useGetCategories } from "@/features/categories/api/use-get-categories";
 import { useGetAccounts } from "@/features/accounts/api/use-get-accounts";
 import { useCreateAccount } from "@/features/accounts/api/use-create-account";
-import { TransactionForm } from "./transaction-form";
+import { ScheduledTransactionForm } from "./scheduled-transaction-from";
 import { Loader2 } from "lucide-react";
 
-const formSchema = inseartTransactionSchema.omit({
+const formSchema = insertScheduledTransactionSchema.omit({
   id: true,
 });
 type FormValues = z.input<typeof formSchema>;
 
-export const NewTransactionSheet = () => {
-  const { isOpen, onClose } = useNewTransaction();
-  const createMutation = useCreateTransaction();
+export const NewScheduledTransactionSheet = () => {
+  const { isOpen, onClose } = useNewScheduledTransaction();
+  const createMutation = useCreateScheduledTransaction();
 
   const categoryQuery = useGetCategories();
   const categoryMutation = useCreateCategory();
@@ -55,9 +55,13 @@ export const NewTransactionSheet = () => {
   const isLoading = categoryQuery.isLoading || accountQuery.isLoading;
 
   const onSubmit = (values: FormValues) => {
+    console.log("Submitting values:", values);
     createMutation.mutate(values, {
       onSuccess: () => {
         onClose();
+      },
+      onError: (error) => {
+        console.error("Error creating scheduled transaction:", error);
       },
     });
   };
@@ -66,15 +70,15 @@ export const NewTransactionSheet = () => {
     <Sheet open={isOpen} onOpenChange={onClose}>
       <SheetContent className="space-y-4">
         <SheetHeader>
-          <SheetTitle>New transaction</SheetTitle>
-          <SheetDescription>Add a new transaction.</SheetDescription>
+          <SheetTitle>New Scheduled Transaction</SheetTitle>
+          <SheetDescription>Add a new scheduled transaction.</SheetDescription>
         </SheetHeader>
         {isLoading ? (
           <div className="absolute inset-0 flex items-center justify-center">
             <Loader2 className="size-4 text-muted-foreground animate-spin" />
           </div>
         ) : (
-          <TransactionForm
+          <ScheduledTransactionForm
             onSubmit={onSubmit}
             disabled={isPending}
             categoryOptions={categoryOptions}

@@ -1,13 +1,14 @@
 import { create } from "zustand";
 
-type NewTransactionState = {
+type NewScheduledTransactionState = {
   isOpen: boolean;
   onOpen: () => void;
   onClose: () => void;
 };
 
-export const useNewTransaction = create<NewTransactionState>((set) => ({
+export const useNewScheduledTransaction = create<NewScheduledTransactionState>((set) => ({
   isOpen: false,
   onOpen: () => set({ isOpen: true }),
   onClose: () => set({ isOpen: false }),
 }));
+
